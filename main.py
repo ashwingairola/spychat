@@ -3,6 +3,7 @@ import csv
 from datetime import datetime
 # from steganography.steganography import Steganography
 from stegano import lsb
+from termcolor import colored
 
 spy = Spy()
 
@@ -30,8 +31,8 @@ def start_chat():
         return
 
     while show_menu:
-        menu_choices = '''What do you wish to do?\n1. Add a status update \n2. Close Application
-3. Add a friend\n4. Send a message\n5. Read a message'''
+        menu_choices = '''\nWhat do you wish to do?\n1. Add a status update \n2. Close Application
+3. Add a friend\n4. Send a message\n5. Read a message\n6. Read chat history'''
         menu_choice = eval(input(menu_choices))
 
         if menu_choice == 1:
@@ -46,6 +47,8 @@ def start_chat():
             send_message()
         elif menu_choice == 5:
             read_message()
+        elif menu_choice == 6:
+            read_chat()
 
 
 def add_status(current_status_message):
@@ -134,7 +137,7 @@ def load_chats():
     with open("chats.csv", "r") as chats_data:
         reader = csv.reader(chats_data)
         for row in reader:
-            if row[2] == spy.get_spy_name():
+            if row[2] == spy.get_spy_name() or row[3] == spy.get_spy_name():
                 chat_message = ChatMessage()
                 chat_message.set_message(row[0])
                 chat_message.set_time(row[1])
@@ -143,11 +146,6 @@ def load_chats():
                 chat_message.set_target_path(row[4])
                 chat_message.set_output_path(row[5])
                 spy.get_chats().append(chat_message)
-
-    chat_messages = spy.get_chats()
-    for chat_message in chat_messages:
-        print(chat_message.get_message() + " " + chat_message.get_time() + " " + chat_message.get_sender() + " " +
-              chat_message.get_receiver())
 
 
 def send_message():
@@ -216,23 +214,16 @@ def read_message():
     if friend_choice == -1:
         return
 
-    print(spy.get_spy_friends()[friend_choice - 1].get_spy_name())
     message, time, sender, receiver = None, None, None, None
     chats = spy.get_chats()
     chats.reverse()
 
     for chat in chats:
-        print(chat.get_message() + " " + chat.get_sender() + " " + chat.get_receiver())
-
-    for chat in chats:
         if chat.get_receiver() == spy.get_spy_friends()[friend_choice - 1].get_spy_name():
-            print(chat.get_message())
-            print(chat.get_output_path())
             try:
                 # message = Steganography.decode(chat.get_output_path())
 
                 message = lsb.reveal(chat.get_output_path())
-                print("Done!")
                 time = chat.get_time()
                 sender = chat.get_sender()
                 receiver = chat.get_receiver()
@@ -248,6 +239,31 @@ def read_message():
 
     print(message + " " + time + " " + sender + " " + receiver)
 
+
+def read_chat():
+    print("\nEnter the number of one of the following friends:")
+    friend_choice = select_friend()
+    friend_name = spy.get_spy_friends()[friend_choice - 1].get_spy_name()
+
+    print("\nYour chat history with " + friend_name + ":")
+
+    chat_history = []
+    all_chats = spy.get_chats()
+    for chat in all_chats:
+        if (chat.get_sender() == spy.get_spy_name() and chat.get_receiver() == friend_name) or \
+                (chat.get_sender() == friend_name and chat.get_receiver() == spy.get_spy_name()):
+            chat_history.append(chat)
+
+    if len(chat_history) == 0:
+        print("There are no chats to be found here.")
+        return
+
+    for chat in chat_history:
+        sender = colored(chat.get_sender() + ": ", "red")
+        time = colored(" [" + chat.get_time() + "]", "blue")
+        message = chat.get_message()
+
+        print(sender + message + time)
 
 # if existing == 'Y':
 #     start_chat()
@@ -269,6 +285,7 @@ def read_message():
 #     start_chat()
 # else:
 #     print("Please enter a valid spy name")
+
 
 while True:
     spy_name = input("Please tell me your name: ")
