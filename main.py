@@ -5,10 +5,9 @@ from stegano import lsb
 from termcolor import colored
 # from steganography.steganography import Steganography
 
-"""
-NOTE: Since this project was built using Python 3.5 and not Python 2.7, Stegano module has been used instead of
-the steganography module.
-"""
+# NOTE: Since this project was built using Python 3.5 and not Python 2.7, Stegano module has been used instead of
+# the steganography module.
+
 # Creating a Spy object referring to the user
 spy = Spy()
 
