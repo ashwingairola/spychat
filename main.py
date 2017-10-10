@@ -1,7 +1,8 @@
 from spy_details import Spy, ChatMessage
 import csv
 from datetime import datetime
-from steganography.steganography import Steganography
+# from steganography.steganography import Steganography
+from stegano import lsb
 
 spy = Spy()
 
@@ -30,7 +31,7 @@ def start_chat():
 
     while show_menu:
         menu_choices = '''What do you wish to do?\n1. Add a status update \n2. Close Application
-3. Add a friend\n4. Send a message'''
+3. Add a friend\n4. Send a message\n5. Read a message'''
         menu_choice = eval(input(menu_choices))
 
         if menu_choice == 1:
@@ -43,6 +44,8 @@ def start_chat():
             add_friend()
         elif menu_choice == 4:
             send_message()
+        elif menu_choice == 5:
+            read_message()
 
 
 def add_status(current_status_message):
@@ -137,6 +140,8 @@ def load_chats():
                 chat_message.set_time(row[1])
                 chat_message.set_sender(row[2])
                 chat_message.set_receiver(row[3])
+                chat_message.set_target_path(row[4])
+                chat_message.set_output_path(row[5])
                 spy.get_chats().append(chat_message)
 
     chat_messages = spy.get_chats()
@@ -181,7 +186,9 @@ def send_message():
 
     try:
         print("Encoding your message...")
-        Steganography.encode(target_path, output_path, message)
+        # Steganography.encode(target_path, output_path, message)
+        secret = lsb.hide(target_path, message)
+        secret.save(output_path)
         print("Done!")
 
         chat_message = ChatMessage()
@@ -197,7 +204,7 @@ def send_message():
             writer = csv.writer(chats_data)
             writer.writerow([chat_message.get_message(), chat_message.get_time(), chat_message.get_sender(),
                             chat_message.get_receiver(), chat_message.get_target_path(),
-                             chat_message.get_target_path()])
+                             chat_message.get_output_path()])
 
     except IOError:
         pass
@@ -209,13 +216,23 @@ def read_message():
     if friend_choice == -1:
         return
 
+    print(spy.get_spy_friends()[friend_choice - 1].get_spy_name())
     message, time, sender, receiver = None, None, None, None
     chats = spy.get_chats()
     chats.reverse()
+
     for chat in chats:
-        if chat.get_sender() == spy.get_spy_friends()[friend_choice - 1]:
+        print(chat.get_message() + " " + chat.get_sender() + " " + chat.get_receiver())
+
+    for chat in chats:
+        if chat.get_receiver() == spy.get_spy_friends()[friend_choice - 1].get_spy_name():
+            print(chat.get_message())
+            print(chat.get_output_path())
             try:
-                message = Steganography.decode(chat.get_output_path())
+                # message = Steganography.decode(chat.get_output_path())
+
+                message = lsb.reveal(chat.get_output_path())
+                print("Done!")
                 time = chat.get_time()
                 sender = chat.get_sender()
                 receiver = chat.get_receiver()
